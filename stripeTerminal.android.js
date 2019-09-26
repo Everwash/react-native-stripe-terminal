@@ -5,8 +5,6 @@ const { RNStripeTerminal } = NativeModules;
 
 class StripeTerminal {
 
-    DeviceTypeChipper2X = RNStripeTerminal.DeviceTypeChipper2X;
-
     // Fetch connection token. Overwritten in call to initialize
     _fetchConnectionToken = () =>
         Promise.reject('You must initialize RNStripeTerminal first.');
