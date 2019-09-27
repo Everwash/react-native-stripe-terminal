@@ -216,6 +216,13 @@ class StripeTerminal {
     );
   }
 
+  readReusableCard() {
+    return this._wrapPromiseReturn(
+      'readReusableCard', () => {
+        RNStripeTerminal.readReusableCard();
+      });
+  }
+
   abortCreatePayment() {
     return this._wrapPromiseReturn('abortCreatePaymentCompletion', () => {
       RNStripeTerminal.abortCreatePayment();
@@ -225,6 +232,12 @@ class StripeTerminal {
   abortDiscoverReaders() {
     return this._wrapPromiseReturn('abortDiscoverReadersCompletion', () => {
       RNStripeTerminal.abortDiscoverReaders();
+    });
+  }
+
+  abortReadReusableCard() {
+    return this._wrapPromiseReturn('abortReadReusableCardCompletion', () => {
+      RNStripeTerminal.abortReadReusableCard();
     });
   }
 

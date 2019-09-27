@@ -78,6 +78,13 @@ public class RNStripeTerminal extends ReactContextBaseJavaModule {
                 .emit(eventName, eventData);
     }
 
+    public WritableMap errorMessage(String msg) {
+        WritableMap errorParams = Arguments.createMap();
+        errorParams.putString("error", msg);
+
+        return errorParams;
+    }
+
     @ReactMethod
     public void initializeTerminal() {
         TerminalEventListener listener = new TerminalEventListener() {};
@@ -86,10 +93,7 @@ public class RNStripeTerminal extends ReactContextBaseJavaModule {
         try {
             Terminal.initTerminal(getContext().getApplicationContext(), LogLevel.VERBOSE, tokenProvider, listener);
         } catch (TerminalException e) {
-            WritableMap errorParams = Arguments.createMap();
-            errorParams.putString("error", "Failed to initialize Stripe Terminal.");
-
-            sendEventWithName("didInitializeTerminal", Arguments.createMap());
+            sendEventWithName("didInitializeTerminal", errorMessage("Failed to initialize Stripe Terminal."));
 
             e.printStackTrace();
         }
@@ -103,9 +107,13 @@ public class RNStripeTerminal extends ReactContextBaseJavaModule {
     }
 
     @ReactMethod
-    public void setConnectionToken(String token) {
+    public void setConnectionToken(String token, String errorMsg) {
         clientSecret = token;
-        sendEventWithName("setConnectionToken", token);
+        if (errorMsg != null) {
+            sendEventWithName("setConnectionToken", errorMessage(errorMsg));
+        } else {
+            sendEventWithName("setConnectionToken", Arguments.createMap());
+        }
     }
 
     public String fetchConnectionToken() {
@@ -127,7 +135,6 @@ public class RNStripeTerminal extends ReactContextBaseJavaModule {
             }
 
             sendEventWithName("readersDiscovered", readerArray);
-
         }, new Callback() {
             @Override
             public void onSuccess() {
@@ -136,10 +143,7 @@ public class RNStripeTerminal extends ReactContextBaseJavaModule {
 
             @Override
             public void onFailure(TerminalException e) {
-                WritableMap errorParams = Arguments.createMap();
-                errorParams.putString("error", e.getErrorMessage());
-
-                sendEventWithName("readersDiscoveryCompletion", errorParams);
+                sendEventWithName("readersDiscoveryCompletion", errorMessage(e.getErrorMessage()));
             }
         });
     }
@@ -167,17 +171,12 @@ public class RNStripeTerminal extends ReactContextBaseJavaModule {
 
                 @Override
                 public void onFailure(TerminalException e) {
-                    WritableMap errorParams = Arguments.createMap();
-                    errorParams.putString("error", "Failed to connect to reader.");
-
-                    sendEventWithName("readerConnection", errorParams);
+                    sendEventWithName("readerConnection", errorMessage("Failed to connect to reader."));
                 }
             });
         } else {
-            WritableMap errorParams = Arguments.createMap();
-            errorParams.putString("error", "No reader found with provided serial number.");
 
-            sendEventWithName("readerConnection", errorParams);
+            sendEventWithName("readerConnection", errorMessage("No reader found with provided serial number."));
         }
     }
 
@@ -194,7 +193,6 @@ public class RNStripeTerminal extends ReactContextBaseJavaModule {
             @Override
             public void onSuccess(PaymentMethod paymentMethod) {
                 pendingReadReusableCard = null;
-                Log.d("ew:in readreusablecard", "success!");
 
                 WritableMap readReusableCardParams = Arguments.createMap();
                 readReusableCardParams.putMap("paymentMethod", serializePaymentMethod(paymentMethod));
@@ -205,13 +203,7 @@ public class RNStripeTerminal extends ReactContextBaseJavaModule {
             @Override
             public void onFailure(TerminalException e) {
                 pendingReadReusableCard = null;
-
-                WritableMap params = Arguments.createMap();
-                params.putString("error", e.getErrorMessage());
-
-                sendEventWithName("readReusableCard", params);
-                
-                e.printStackTrace();
+                sendEventWithName("readReusableCard", errorMessage(e.getErrorMessage())); 
             }
         });
     }
@@ -246,7 +238,7 @@ public class RNStripeTerminal extends ReactContextBaseJavaModule {
 
                 @Override
                 public void onFailure(TerminalException e) {
-                    sendEventWithName("abortDiscoverReadersCompletion", e.getErrorMessage());
+                    sendEventWithName("abortDiscoverReadersCompletion", errorMessage(e.getErrorMessage()));
                 }
             });
         }
@@ -263,7 +255,7 @@ public class RNStripeTerminal extends ReactContextBaseJavaModule {
 
                 @Override
                 public void onFailure(TerminalException e) {
-                    sendEventWithName("abortReadReusableCardCompletion", e.getErrorMessage());
+                    sendEventWithName("abortReadReusableCardCompletion", errorMessage(e.getErrorMessage()));
                 }
             });
         }

@@ -67,14 +67,14 @@ class StripeTerminal {
         // Which allows the initialization of the Terminal
         fetchConnectionToken().then((token) => {
             if (token) {
-                RNStripeTerminal.setConnectionToken(token);
+                RNStripeTerminal.setConnectionToken(token, null);
             } else {
-              throw new Error('User-supplied `fetchConnectionToken` resolved successfully, but no token was returned.');
+                throw new Error('User-supplied `fetchConnectionToken` resolved successfully, but no token was returned.');
             }
           }).catch(err => RNStripeTerminal.setConnectionToken(null, err.message || 'Error in user-supplied `fetchConnectionToken`.'))
     }
 
-    discoverReaders(timeout, deviceType, simulated) {
+    discoverReaders() {
         return this._wrapPromiseReturn('readerDiscoveryCompletion', () => {
             RNStripeTerminal.discoverReaders();
         });

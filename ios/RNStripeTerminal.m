@@ -53,7 +53,9 @@ static dispatch_once_t onceToken = 0;
              @"lastReaderEvent",
              @"abortCreatePaymentCompletion",
              @"abortDiscoverReadersCompletion",
-             @"abortInstallUpdateCompletion"
+             @"abortInstallUpdateCompletion",
+             @"readReusableCard",
+             @"abortReadReusableCardCompletion"
              ];
 }
 
@@ -142,6 +144,7 @@ RCT_EXPORT_METHOD(initialize) {
     [self abortDiscoverReaders];
     [self abortCreatePayment];
     [self abortInstallUpdate];
+    [self abortReadReusableCard];
 
     // When the module is initialized, assume the card has been removed.
     lastReaderEvent = SCPReaderEventCardRemoved;
@@ -226,6 +229,15 @@ RCT_EXPORT_METHOD(installUpdate) {
              @"currency": intent.currency,
              @"metadata": intent.metadata
              };
+}
+
+- (NSDictionary *)serializeCard:(SCPPaymentMethod *)paymentMethod {
+    return @{
+           @"stripeId": paymentMethod.stripeId,
+           @"last4": paymentMethod.card.last4,
+           @"brand": @(paymentMethod.card.brand),
+           @"fingerprint": paymentMethod.card.fingerprint
+           };
 }
 
 RCT_EXPORT_METHOD(createPayment:(NSDictionary *)options) {
@@ -364,6 +376,22 @@ RCT_EXPORT_METHOD(cancelPaymentIntent) {
     }];
 }
 
+RCT_EXPORT_METHOD(readReusableCard) {
+    [self abortReadReusableCard];
+
+    SCPReadReusableCardParameters *params = [SCPReadReusableCardParameters new];
+
+    pendingReadReusableCard = [SCPTerminal.shared readReusableCard:params delegate: self completion:^(SCPPaymentMethod * _Nullable readResult, NSError * _Nullable error) {
+        pendingReadReusableCard = nil;
+
+        if (error) {
+            [self sendEventWithName:@"readReusableCard" body:@{@"error": [error localizedDescription]}];
+        } else {
+            [self sendEventWithName:@"readReusableCard" body:@{@"paymentMethod": [self serializeCard:readResult]}];
+        }
+    }];
+}
+
 - (void)terminal:(SCPTerminal *)terminal didRequestReaderInput:(SCPReaderInputOptions)inputOptions {
     [self sendEventWithName:@"didRequestReaderInput" body:
      @{
@@ -480,6 +508,19 @@ RCT_EXPORT_METHOD(abortInstallUpdate) {
         return;
     }
     [self sendEventWithName:@"abortInstallUpdateCompletion" body:@{}];
+}
+
+RCT_EXPORT_METHOD(abortReadReusableCard) {
+    if (pendingReadReusableCard) {
+        [pendingReadReusableCard cancel:^(NSError * _Nullable error) {
+            if (error) {
+                [self sendEventWithName:@"abortReadReusableCardCompletion" body:@{@"error": [error localizedDescription]}];
+            } else {
+                pendingReadReusableCard = nil;
+                [self sendEventWithName:@"abortReadReusableCardCompletion" body:@{}];
+            }
+        }];
+    }
 }
 
 RCT_EXPORT_METHOD(getConnectionStatus) {
