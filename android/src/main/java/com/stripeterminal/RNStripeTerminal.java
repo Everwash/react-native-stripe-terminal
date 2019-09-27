@@ -32,12 +32,6 @@ import com.stripeterminal.TokenProvider;
 import com.stripeterminal.TerminalEventListener;
 
 import android.util.Log;
-import android.Manifest;
-import android.app.Activity;
-import android.content.Context;
-import android.content.Intent;
-import java.lang.reflect.*;
-import java.util.HashMap;
 import java.util.Map;
 import java.lang.String;
 import java.util.ArrayList;
